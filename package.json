@@ -1,0 +1,25 @@
+{
+  "name": "lunar-term",
+  "version": "1.0.0",
+  "description": "农历 + 二十四节气（精确到秒）+ 三伏 / 数九，零依赖，浏览器与 Node.js 通用",
+  "main": "lunar-term.js",
+  "files": [
+    "lunar-term.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node selftest.js"
+  },
+  "keywords": [
+    "lunar",
+    "chinese-calendar",
+    "solar-term",
+    "节气",
+    "农历",
+    "vsop87",
+    "sanfu",
+    "calendar"
+  ],
+  "license": "MIT"
+}
