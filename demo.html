@@ -192,6 +192,7 @@ body{
   </div>
 
   <div class="foot">
+    <div id="nextTerm" style="margin-bottom:6px;color:var(--term);font-weight:600"></div>
     不依赖任何库，<code>lunar-term.js</code> 单文件，浏览器与 Node.js 通用<br>
     节气用 VSOP87D 太阳黄经 + IAU1980 章动求解；2050 年后秒位为预测值，ΔT 不确定度随年数增长
   </div>
@@ -391,6 +392,15 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft') { shiftMonth(-1); }
   else if (e.key === 'ArrowRight') { shiftMonth(1); }
 });
+
+/* ---------- 下一个节气：L.nextTerm() 一行就够 ---------- */
+(function showNextTerm() {
+  const el = document.getElementById('nextTerm');
+  if (!el) return;
+  const n = L.nextTerm();          // 不传参 = 以此刻为起点
+  if (!n) return;
+  el.textContent = '下一个节气：' + n.name + '，还有 ' + n.days + ' 天 ' + n.hours + ' 小时';
+})();
 
 /* ---------- 启动 ---------- */
 // 支持 #2026-11-7 直接定位到某天，方便分享「今年立冬」这种链接
