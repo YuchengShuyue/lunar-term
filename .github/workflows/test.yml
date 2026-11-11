@@ -29,5 +29,6 @@ jobs:
         if: matrix.node >= 14
         run: node --input-type=module -e "import L, { termAt } from './lunar-term.mjs'; if (termAt(2026)['11-7'].name !== '立冬') process.exit(1); if (typeof L.solar2lunar !== 'function') process.exit(1); console.log('ESM ok');"
 
-      - name: types exist
-        run: test -s lunar-term.d.ts
+      - name: types match runtime exports
+        if: matrix.node >= 14
+        run: node verify-types.mjs
