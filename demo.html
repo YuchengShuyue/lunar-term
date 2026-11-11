@@ -267,6 +267,18 @@ function renderCal() {
   const now = new Date();
   const todayStr = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
 
+  // 选中日期必须落在当前视图的月份里，否则详情会显示别的月份的日期、网格上也没有选中框。
+  // 切月、点灰格跳月、首次加载三种情况都靠这一处兜底，只在这里维护。
+  if (sel) {
+    const sp = sel.split('-');
+    if (+sp[0] !== curY || +sp[1] !== curM) sel = null;
+  }
+  if (!sel) {
+    sel = (now.getFullYear() === curY && now.getMonth() + 1 === curM)
+      ? todayStr                      // 就在本月 → 选今天
+      : curY + '-' + curM + '-1';     // 不然选 1 号
+  }
+
   let html = '';
   for (let i = 0; i < 42; i++) {
     const d = new Date(start.getTime() + i * 86400000);
@@ -300,12 +312,6 @@ function renderCal() {
   }
   document.getElementById('grid').innerHTML = html;
 
-  if (!sel) {
-    sel = todayStr;
-    if (!document.querySelector('.day.sel')) {   // 今天不在本月则默认选 1 号
-      sel = curY + '-' + curM + '-1';
-    }
-  }
   renderDetail();
 }
 
@@ -334,12 +340,12 @@ function renderDetail() {
   if (hol) rows.push(['节日', '<span class="v a">' + hol + '</span>']);
   if (lf) rows.push(['农历', '<span class="v a">' + lf + '</span>']);
   if (at) {
-    const dt = L.termBJT(y, TERM_IDX[at.name]);
+    // termAt 已经把时/分/秒算好并缓存了，不必再调一次 termBJT 重跑一遍 VSOP87
     const unc = at.certain ? '' : '<span class="unc" title="远期 ΔT 不可预测，秒位为预测值">±' +
       Math.round(L.dtUnc(y)) + ' 秒</span>';
     rows.push(['节气', '<span class="v t">' + at.name + '</span>'
-      + '<span class="clock">' + pad(dt.h) + ':' + pad(dt.mi)
-      + '<i class="ss">' + pad(dt.s) + '</i></span>' + unc]);
+      + '<span class="clock">' + pad(at.hh) + ':' + pad(at.mi)
+      + '<i class="ss">' + pad(at.ss) + '</i></span>' + unc]);
   }
   const sf = L.sanfuState(y, m, d);
   if (sf) rows.push(['时令', '<span class="v">' + sf + '</span>']);
@@ -357,12 +363,8 @@ function renderDetail() {
 }
 
 /* ---------- 节气表 ---------- */
-const TERM_IDX = {};
-L.TERMS.forEach((n, i) => TERM_IDX[n] = i);
-
 function renderTerms() {
   document.getElementById('ym2').innerHTML = curY + ' 年 二十四节气';
-  const at = L.termAt(curY);
   const now = new Date();
   const nowKey = now.getFullYear() + '-' + (now.getMonth() + 1) + '-' + now.getDate();
 
@@ -385,6 +387,7 @@ function renderTerms() {
 
 /* ---------- 键盘 ---------- */
 document.addEventListener('keydown', e => {
+  if (tab !== 'cal') return;                 // 节气表页没有「上/下个月」，别让方向键空转
   if (e.key === 'ArrowLeft') { shiftMonth(-1); }
   else if (e.key === 'ArrowRight') { shiftMonth(1); }
 });

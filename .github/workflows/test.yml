@@ -1,0 +1,33 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  selftest:
+    name: node ${{ matrix.node }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [12, 16, 18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      # 零依赖，没有 install 步骤
+      - name: run assertions
+        run: node selftest.js
+
+      - name: ES module entry works
+        if: matrix.node >= 14
+        run: node --input-type=module -e "import L, { termAt } from './lunar-term.mjs'; if (termAt(2026)['11-7'].name !== '立冬') process.exit(1); if (typeof L.solar2lunar !== 'function') process.exit(1); console.log('ESM ok');"
+
+      - name: types exist
+        run: test -s lunar-term.d.ts

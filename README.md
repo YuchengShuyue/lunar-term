@@ -1,5 +1,8 @@
 # lunar-term.js
 
+[![test](https://github.com/YuchengShuyue/lunar-term/actions/workflows/test.yml/badge.svg)](https://github.com/YuchengShuyue/lunar-term/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 农历 + 二十四节气（**精确到秒**）+ 三伏 / 数九。单文件，零依赖，浏览器与 Node.js 通用。
 
 ![截图](screenshot.png)
@@ -41,10 +44,13 @@
 ```bash
 git clone https://github.com/YuchengShuyue/lunar-term.git
 cd lunar-term
-node selftest.js      # 24 项断言，应全部通过
+node selftest.js      # 26 项断言，应全部通过
 ```
 
 打开 `demo.html` 直接看效果，不需要装任何东西。
+
+> 本库**还没有发布到 npm**，直接把 `lunar-term.js` 拷进项目即可（就一个文件）。
+> 仓库里已经备好 `package.json`，需要时 `npm publish` 就能发。
 
 ### 浏览器
 
@@ -72,7 +78,22 @@ L.shengxiao(2026);          // '马'
 
 L.sanfuState(2026, 7, 16);  // '初伏第 2 天'
 L.jiuday(2026, 12, 22);     // '一九第 1 天'
+
+// 越界不会崩：solar2lunar 返回 null，lunarText 直接吃 null 返回空串
+L.lunarText(L.solar2lunar(2126, 11, 7));   // ''
 ```
+
+### ESM
+
+```js
+import L, { termAt, solar2lunar } from './lunar-term.mjs';
+
+termAt(2026)['11-7'].name;   // '立冬'
+```
+
+### TypeScript
+
+自带 `lunar-term.d.ts`，无需 `@types`。`TermInfo`、`LunarDate`、`TermTime` 等类型都已导出。
 
 ## API
 
@@ -83,7 +104,7 @@ L.jiuday(2026, 12, 22);     // '一九第 1 天'
 | `termAt(year)` | `{ '11-7': { name, hh, mi, ss, certain } }` |
 | `termJDE(year, n)` | 同上但返回力学时儒略日（不含 ΔT 与时区） |
 | `solar2lunar(y, m, d)` | 公历转农历，返回 `{y,m,d,leap}`；**越界返回 `null`** |
-| `lunarText(l)` | `'九月廿九'` / `'闰六月初一'` |
+| `lunarText(l)` | `'九月廿九'` / `'闰六月初一'`；**传 `null` 返回 `''`**（可直接接 `solar2lunar` 的结果） |
 | `lunarFest(y, m, d, l)` | 农历节日名，无则空串（含除夕，跨年处理好了） |
 | `ganzhi(y)` / `shengxiao(y)` | `'丙午'` / `'马'` |
 | `sanfuState(y, m, d)` | `'今日入伏'` / `'中伏第 1 天'` / 不在三伏内返回 `''` |
@@ -120,6 +141,11 @@ L.jiuday(2026, 12, 22);     // '一九第 1 天'
 
 **4. 三伏的边界口径。** 采用《陰陽書·曆法》「夏至日得庚便為初庚」，
 即起始日当天若是庚日，就算第一个庚日。若你的用途采用「次日起算」的另一种口径，结果会差一天。
+
+**5. ΔT 在 2050 年处的年增长率会跳一挡。**
+2005–2050 段约 0.88 秒/年，2050–2150 段约 2.04 秒/年（Espenak-Meeus 远期段的固有特性，不是笔误）。
+实测 `deltaT(2050) = 85.401`、`deltaT(2051) = 87.438`，所以 2051 年的节气时刻会比按前一段斜率外推的结果
+晚约 2 秒。那一段 `certain` 本来就是 `false`，不该当真值看。
 
 ## 算法出处
 

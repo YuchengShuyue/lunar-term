@@ -1,15 +1,40 @@
 {
   "name": "lunar-term",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "农历 + 二十四节气（精确到秒）+ 三伏 / 数九，零依赖，浏览器与 Node.js 通用",
   "main": "lunar-term.js",
+  "types": "lunar-term.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lunar-term.d.ts",
+      "import": "./lunar-term.mjs",
+      "require": "./lunar-term.js",
+      "default": "./lunar-term.js"
+    }
+  },
   "files": [
     "lunar-term.js",
+    "lunar-term.mjs",
+    "lunar-term.d.ts",
+    "selftest.js",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "test": "node selftest.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YuchengShuyue/lunar-term.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YuchengShuyue/lunar-term/issues"
+  },
+  "homepage": "https://github.com/YuchengShuyue/lunar-term#readme",
+  "author": "宇承澍悦",
+  "license": "MIT",
+  "engines": {
+    "node": ">=12"
   },
   "keywords": [
     "lunar",
@@ -19,7 +44,8 @@
     "农历",
     "vsop87",
     "sanfu",
-    "calendar"
-  ],
-  "license": "MIT"
+    "jiujiu",
+    "calendar",
+    "zero-dependency"
+  ]
 }
