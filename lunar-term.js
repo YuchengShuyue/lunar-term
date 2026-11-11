@@ -316,6 +316,70 @@ function jiuday(y,m,d){
   return nm[Math.floor(off/9)] + '第 ' + (off % 9 + 1) + ' 天';
 }
 
+// ---------- 下一个 / 上一个节气 ----------
+// termAt(year) 给的是「某一年 24 个节气」的字典，要回答「离下个节气还有几天」，
+// 调用方得自己遍历 12 个月、拼出日期、还得处理 12 月冬至之后跨到次年小寒这件事。
+// 这段代码几乎每个使用者都要写一遍，所以收进库里。
+//
+// 时刻统一用 UTC 毫秒时间戳表示。termBJT 给的是北京时（0–23 时），
+// 换算成时间戳要减 8 小时；Date.UTC 对负数小时会自动往前推一天，不必特判。
+const _termMsCache = {};
+function _termMs(year, n){
+  const k = year + '#' + n;
+  if(_termMsCache[k] !== undefined) return _termMsCache[k];
+  const dt = termBJT(year, n);
+  const ms = Date.UTC(dt.y, dt.m - 1, dt.d, dt.h - 8, dt.mi, dt.s);
+  _termMsCache[k] = ms;
+  return ms;
+}
+function _toMs(v){
+  if(v === undefined || v === null) return Date.now();
+  if(v && typeof v.getTime === 'function'){ const t = v.getTime(); return isFinite(t) ? t : null; }
+  if(typeof v === 'number' && isFinite(v)) return v;
+  return null;
+}
+// 北京时的年份：时间戳 + 8h 再取 UTC 年
+function _bjtYear(t){ return new Date(t + 28800000).getUTCFullYear(); }
+function _termPack(name, ms, t, year){
+  const d = ms - t, a = Math.abs(d);
+  return {
+    name: name,
+    at: new Date(ms),
+    ms: d,
+    days: Math.floor(a / 86400000),
+    hours: Math.floor(a / 3600000) % 24,
+    minutes: Math.floor(a / 60000) % 60,
+    certain: year <= 2050
+  };
+}
+// 严格晚于 from 的第一个节气。from 缺省为此刻；传非法值返回 null。
+function nextTerm(from){
+  const t = _toMs(from);
+  if(t === null) return null;
+  const y0 = _bjtYear(t);
+  // 12 月末时下一个节气落在次年 1 月，所以查两年足够
+  for(let y = y0; y <= y0 + 1; y++){
+    for(let n = 0; n < 24; n++){
+      const ms = _termMs(y, n);
+      if(ms > t) return _termPack(TERMS[n], ms, t, y);
+    }
+  }
+  return null;
+}
+// 严格早于 from 的最后一个节气；ms / days / hours / minutes 为已过去的时间（正数）。
+function prevTerm(from){
+  const t = _toMs(from);
+  if(t === null) return null;
+  const y0 = _bjtYear(t);
+  for(let y = y0; y >= y0 - 1; y--){
+    for(let n = 23; n >= 0; n--){
+      const ms = _termMs(y, n);
+      if(ms < t) return _termPack(TERMS[n], ms, t, y);
+    }
+  }
+  return null;
+}
+
 // ---------------- 导出 ----------------
 return {
   // 常量
@@ -329,6 +393,7 @@ return {
   sunAppLon: sunAppLon, deltaT: deltaT, dtUnc: dtUnc,
   // 节气
   termJDE: termJDE, termBJT: termBJT, termMap: termMap, termAt: termAt,
+  termDateOf: termDateOf, nextTerm: nextTerm, prevTerm: prevTerm,
   // 干支与节令
   jdnInt: jdnInt, isGeng: isGeng, sanfu: sanfu,
   sanfuState: sanfuState, jiuday: jiuday

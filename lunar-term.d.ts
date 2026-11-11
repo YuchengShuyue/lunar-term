@@ -36,6 +36,22 @@ export interface TermInfo {
   certain: boolean;
 }
 
+/** nextTerm / prevTerm 的返回值 */
+export interface TermStop {
+  /** 节气名，如「小雪」 */
+  name: string;
+  /** 该节气的精确时刻 */
+  at: Date;
+  /** 与 from 的毫秒差：nextTerm 为正（还有多久），prevTerm 为负（已过去多久） */
+  ms: number;
+  /** 距 from 的天数，向下取整 */
+  days: number;
+  hours: number;
+  minutes: number;
+  /** 该节气所在年份是否在 2050 年及以前（真秒级）；之后为 ΔT 预测值 */
+  certain: boolean;
+}
+
 export interface SanfuRange {
   /** 初伏首日 00:00 UTC 的毫秒时间戳 */
   chu: number;
@@ -96,6 +112,30 @@ export function termMap(year: number): Record<string, string>;
 /** 该年 24 个节气的名字 + 时刻 + 确定性标记，key 同上 */
 export function termAt(year: number): Record<string, TermInfo>;
 
+/**
+ * 该年该节气所在的公历日期（UTC 00:00，**只有日期，不含当天时刻**）。
+ * 要精确到秒用 termBJT；只要「哪一天」用这个。该年没有这个节气名返回 null。
+ */
+export function termDateOf(year: number, name: string): Date | null;
+
+/**
+ * 严格晚于 from 的第一个节气。from 缺省为此刻，也可传 Date 或毫秒时间戳。
+ * 自动处理跨年（12 月冬至之后是次年小寒）。非法入参返回 null。
+ *
+ * ```js
+ * const n = LunarTerm.nextTerm();
+ * n.name;            // '小雪'
+ * n.days;            // 10
+ * n.at.toISOString();// '2026-11-22T07:23:20.000Z'
+ * ```
+ */
+export function nextTerm(from?: Date | number): TermStop | null;
+
+/**
+ * 严格早于 from 的最后一个节气。ms / days / hours / minutes 为**已过去**的时间（正数）。
+ */
+export function prevTerm(from?: Date | number): TermStop | null;
+
 /** 整数儒略日数（当天 0 时），用于干支推算 */
 export function jdnInt(y: number, m: number, d: number): number;
 /** 该日是否为庚日 */
@@ -126,6 +166,9 @@ declare const LunarTerm: {
   termBJT: typeof termBJT;
   termMap: typeof termMap;
   termAt: typeof termAt;
+  termDateOf: typeof termDateOf;
+  nextTerm: typeof nextTerm;
+  prevTerm: typeof prevTerm;
   jdnInt: typeof jdnInt;
   isGeng: typeof isGeng;
   sanfu: typeof sanfu;

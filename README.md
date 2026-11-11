@@ -39,18 +39,49 @@
 
 `node selftest.js` 可复现以上全部结论。
 
-## 快速开始
+## 怎么用
+
+**就一个文件，拷进你的项目就能用**，不装依赖、不联网：
+
+```bash
+curl -O https://raw.githubusercontent.com/YuchengShuyue/lunar-term/main/lunar-term.js
+```
+
+想先验一遍再信，clone 下来跑测试（42 项断言，应全部通过）：
 
 ```bash
 git clone https://github.com/YuchengShuyue/lunar-term.git
 cd lunar-term
-node selftest.js      # 26 项断言，应全部通过
+node selftest.js
 ```
 
-打开 `demo.html` 直接看效果，不需要装任何东西。
+`demo.html` 双击就能打开，不装任何东西也能看到效果。
 
-> 本库**还没有发布到 npm**，直接把 `lunar-term.js` 拷进项目即可（就一个文件）。
-> 仓库里已经备好 `package.json`，需要时 `npm publish` 就能发。
+### 最常用的一个调用
+
+```js
+const L = require('./lunar-term.js');
+
+const n = L.nextTerm();
+n.name;      // '小雪'
+n.at;        // Date，2026-11-22T07:23:20.000Z（北京时间 15:23:20）
+n.days;      // 10     —— 还有 10 天
+n.hours;     // 16
+n.certain;   // true   —— 2050 年之后为 false，秒变成 ΔT 预测值
+```
+
+`nextTerm()` / `prevTerm()` 不传参就以此刻为起点，也可以传 `Date` 或毫秒时间戳。
+**跨年由库内部处理**——12 月冬至之后的下一个节气是次年小寒，不用自己遍历 12 个月。
+
+### 更多可运行的例子
+
+三个都能直接 `node` 跑，不需要装任何东西：
+
+| 例子 | 演示什么 |
+|---|---|
+| [`examples/next-term.js`](examples/next-term.js) | 离下一个节气还有几天 / 上一个已过几天 |
+| [`examples/term-calendar.js`](examples/term-calendar.js) | 打印某年 24 个节气的时刻表 + 对应农历日期 |
+| [`examples/esm-import.mjs`](examples/esm-import.mjs) | ESM 具名导入、农历转换、三伏数九 |
 
 ### 浏览器
 
@@ -66,6 +97,9 @@ node selftest.js      # 26 项断言，应全部通过
 
 ```js
 const L = require('./lunar-term.js');
+
+L.nextTerm(new Date('2026-11-08T12:00:00+08:00'));
+// { name:'小雪', at:2026-11-22T07:23:20.000Z, days:14, hours:3, ... }
 
 L.termBJT(2026, 20);        // { y:2026, m:11, d:7, h:17, mi:52, s:2 }
 L.termMap(2026)['11-7'];    // '立冬'
@@ -102,6 +136,9 @@ termAt(2026)['11-7'].name;   // '立冬'
 | `termBJT(year, n)` | 第 n 个节气的北京时（n = 0 小寒 … 23 冬至），返回 `{y,m,d,h,mi,s}` |
 | `termMap(year)` | `{ '11-7': '立冬', ... }`，key 为「月-日」**不带前导零** |
 | `termAt(year)` | `{ '11-7': { name, hh, mi, ss, certain } }` |
+| **`nextTerm([from])`** | **下一个节气** `{ name, at, ms, days, hours, minutes, certain }`；自动跨年 |
+| **`prevTerm([from])`** | **上一个节气**，结构同上；`ms` 为负表示已过去多久 |
+| `termDateOf(year, name)` | 某年某节气所在的日期（UTC 0 时，**只有日期、不含当天时刻**） |
 | `termJDE(year, n)` | 同上但返回力学时儒略日（不含 ΔT 与时区） |
 | `solar2lunar(y, m, d)` | 公历转农历，返回 `{y,m,d,leap}`；**越界返回 `null`** |
 | `lunarText(l)` | `'九月廿九'` / `'闰六月初一'`；**传 `null` 返回 `''`**（可直接接 `solar2lunar` 的结果） |

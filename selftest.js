@@ -307,6 +307,65 @@ if (l1 && typeof l1.y === 'number' && typeof l1.m === 'number' && typeof l1.d ==
   ok('solar2lunar 返回 { y, m, d, leap }');
 } else bad('solar2lunar 结构异常');
 
+/* ========== 14. 下一个 / 上一个节气 ==========
+ * 参照来自本库自身的 termBJT（第 1、2 段已用紫金山天文台数据验过秒级精度）。
+ * 所以这一段属于【自洽检验】：验的是 nextTerm 的挑选顺序、跨年与边界处理，
+ * 不是天文算法本身的精度。
+ */
+console.log('\n=== 14. 下一个 / 上一个节气 ===');
+
+// 从立冬之后一天出发，下一个必须是小雪，且时刻与 termBJT 完全一致
+{
+  const from = Date.UTC(2026, 10, 8, 4, 0, 0);   // 2026-11-08 12:00 北京时
+  const n = L.nextTerm(from);
+  eq(n && n.name, '小雪', 'nextTerm(11-08) → 小雪');
+  const want = Date.UTC(2026, 10, 22, 15 - 8, 23, 20);   // 北京时 11-22 15:23:20
+  eq(n && n.at && n.at.getTime(), want, 'nextTerm 的时刻与 termBJT 一致（小雪 15:23:20 北京时）');
+  eq(n && n.certain, true, '2026 年的节气 certain 为 true');
+  // days / hours / minutes 三者向下取整会有余数，允许差不到 1 分钟
+  const back = ((n.days * 24 + n.hours) * 60 + n.minutes) * 60000;
+  if (Math.abs(n.ms - back) < 60000) ok('days / hours / minutes 与 ms 自洽（舍入余数 < 1 分钟）');
+  else bad('days/hours/minutes 与 ms 不自洽：ms=' + n.ms + '，还原=' + back);
+}
+
+// 跨年：12 月 25 日之后是次年小寒
+{
+  const n = L.nextTerm(Date.UTC(2026, 11, 25, 4, 0, 0));
+  eq(n && n.name, '小寒', 'nextTerm(12-25) 跨年 → 次年小寒');
+  eq(n && n.at.getUTCFullYear(), 2027, '跨年结果的年份为 2027');
+}
+
+// 跨年：1 月 1 日之前是上一年冬至
+{
+  const p = L.prevTerm(Date.UTC(2026, 0, 1, 4, 0, 0));
+  eq(p && p.name, '冬至', 'prevTerm(01-01) 跨年 → 上年冬至');
+  eq(p && p.at.getUTCFullYear(), 2025, '跨年结果的年份为 2025');
+  if (p && p.ms < 0) ok('prevTerm 的 ms 为负（表示已过去）');
+  else bad('prevTerm 的 ms 应为负，实得 ' + (p && p.ms));
+}
+
+// 边界：正好卡在节气时刻上——next 严格大于，prev 严格小于
+{
+  const at = Date.UTC(2026, 10, 22, 7, 23, 20);   // 小雪那一刻（北京时 15:23:20）
+  eq(L.nextTerm(at).name, '大雪', 'nextTerm 在节气当刻取下一个（严格大于）');
+  eq(L.prevTerm(at).name, '立冬', 'prevTerm 在节气当刻取上一个（严格小于）');
+}
+
+// 非法入参不抛错，返回 null；缺省用当前时刻
+{
+  eq(L.nextTerm(new Date(NaN)), null, 'nextTerm(Invalid Date) 返回 null');
+  eq(L.prevTerm('abc'), null, 'prevTerm(非日期字符串) 返回 null');
+  if (L.nextTerm() !== null) ok('nextTerm() 缺省用当前时刻');
+  else bad('nextTerm() 无参时不应返回 null');
+}
+
+// termDateOf：只要日期，不含当天时刻
+{
+  const d = L.termDateOf(2026, '冬至');
+  eq(d && d.toISOString(), '2026-12-22T00:00:00.000Z', 'termDateOf(2026, 冬至) → 12-22');
+  eq(L.termDateOf(2026, '不存在'), null, 'termDateOf 未知节气名返回 null');
+}
+
 /* ========== 汇总 ========== */
 console.log('\n' + '─'.repeat(52));
 console.log(fail === 0

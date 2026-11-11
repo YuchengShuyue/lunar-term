@@ -13,5 +13,6 @@ export const {
   jdFromDate, dateFromJD,
   sunAppLon, deltaT, dtUnc,
   termJDE, termBJT, termMap, termAt,
+  termDateOf, nextTerm, prevTerm,
   jdnInt, isGeng, sanfu, sanfuState, jiuday,
 } = LunarTerm;
