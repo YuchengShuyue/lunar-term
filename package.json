@@ -1,6 +1,6 @@
 {
   "name": "lunar-term",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "农历 + 二十四节气（精确到秒）+ 三伏 / 数九，零依赖，浏览器与 Node.js 通用",
   "main": "lunar-term.js",
   "types": "lunar-term.d.ts",
