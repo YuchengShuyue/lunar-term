@@ -5,6 +5,8 @@
 
 农历 + 二十四节气（**精确到秒**）+ 三伏 / 数九。单文件，零依赖，浏览器与 Node.js 通用。
 
+**▶ 在线试一下**：[yuchengshuyue.github.io/lunar-term/demo.html](https://yuchengshuyue.github.io/lunar-term/demo.html) —— 打开就能点，不用装任何东西。
+
 ![截图](screenshot.png)
 
 ## 为什么又写一个
@@ -56,7 +58,7 @@ cd lunar-term
 node selftest.js
 ```
 
-`demo.html` 双击就能打开，不装任何东西也能看到效果。
+`demo.html` 双击就能打开，不装任何东西也能看到效果；不想下载就直接看页面顶部的在线版。
 
 ### 最常用的一个调用
 
