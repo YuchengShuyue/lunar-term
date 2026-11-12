@@ -71,6 +71,10 @@ function solar2lunar(y,m,d){
   // 由调用处显示“数据范围外”。节气不受影响——节气走天文算法，可算到几千年后。
   if(y < 1900 || y > 2100) return null;
   let offset = Math.round((Date.UTC(y,m-1,d) - Date.UTC(1900,0,31)) / 86400000);
+  // 表首日是 1900-01-31（农历 1900 年正月初一）。1900-01-01 ~ 01-30 虽在年份范围内，
+  // 却落在表首日之前，硬算会得到 m=0、d 为负数的非法值（lunarText 会输出「undefined月undefined」）。
+  // 这种「越界但不越年」的情况必须同样返回 null，否则调用方拿到的是错值而不是空值。
+  if(offset < 0) return null;
   let temp = 0, i = 1900;
   while(i < 2101 && offset > 0){ temp = lYearDays(i); offset -= temp; i++; }
   if(offset < 0){ offset += temp; i--; }
@@ -90,7 +94,9 @@ function solar2lunar(y,m,d){
 function lunarText(l){ if(!l) return ''; return (l.leap?'闰':'') + CN_MON[l.m-1] + '月' + CN_DAY[l.d-1]; }
 function ganzhi(y){ return GAN[(y-4)%10] + ZHI[(y-4)%12]; }
 function shengxiao(y){ return SX[(y-4)%12]; }
+// 传 null / undefined 返回空串，理由同 lunarText：solar2lunar 越界给 null，串联时不该崩。
 function lunarFest(y,m,d,l){
+  if(!l) return '';
   if(!l.leap && LFEST[l.m+'-'+l.d]) return LFEST[l.m+'-'+l.d];
   if(!l.leap && l.m === 12){
     const nx = new Date(Date.UTC(y, m-1, d+1));

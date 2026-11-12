@@ -71,7 +71,8 @@ export const CN_DAY: readonly string[];
 export const LFEST: Readonly<Record<string, string>>;
 
 /**
- * 公历转农历。只覆盖 1900–2100，越界返回 null（不抛错、不给错值）。
+ * 公历转农历。有效区间是 1900-01-31 – 2100-12-31（1900 年正月初一为表首日），
+ * 越界返回 null（不抛错、不给错值）——包括 1900-01-01 到 01-30 这 30 天。
  */
 export function solar2lunar(y: number, m: number, d: number): LunarDate | null;
 
@@ -83,8 +84,9 @@ export function lunarText(l: LunarDate | null | undefined): string;
 
 /**
  * 农历节日名，无则空串。含除夕（腊月只有 29 天时，廿九即除夕）。
+ * 传 null / undefined 返回空串，可以直接串在 solar2lunar 后面。
  */
-export function lunarFest(y: number, m: number, d: number, l: LunarDate): string;
+export function lunarFest(y: number, m: number, d: number, l: LunarDate | null | undefined): string;
 
 /** 年干支，如「丙午」 */
 export function ganzhi(y: number): string;

@@ -48,7 +48,7 @@
 curl -O https://raw.githubusercontent.com/YuchengShuyue/lunar-term/main/lunar-term.js
 ```
 
-想先验一遍再信，clone 下来跑测试（42 项断言，应全部通过）：
+想先验一遍再信，clone 下来跑测试（47 项断言，应全部通过）：
 
 ```bash
 git clone https://github.com/YuchengShuyue/lunar-term.git
@@ -63,15 +63,18 @@ node selftest.js
 ```js
 const L = require('./lunar-term.js');
 
-const n = L.nextTerm();
+// 传一个固定时刻，下面的数字才是可复现的
+const n = L.nextTerm(new Date('2026-11-08T12:00:00+08:00'));
 n.name;      // '小雪'
 n.at;        // Date，2026-11-22T07:23:20.000Z（北京时间 15:23:20）
-n.days;      // 10     —— 还有 10 天
-n.hours;     // 16
+n.days;      // 14     —— 还有 14 天
+n.hours;     // 3
+n.minutes;   // 23
 n.certain;   // true   —— 2050 年之后为 false，秒变成 ΔT 预测值
 ```
 
-`nextTerm()` / `prevTerm()` 不传参就以此刻为起点，也可以传 `Date` 或毫秒时间戳。
+`nextTerm()` / `prevTerm()` 不传参就以此刻为起点（`n.days` 之类的数字会随运行时刻变化），
+也可以传 `Date` 或毫秒时间戳。
 **跨年由库内部处理**——12 月冬至之后的下一个节气是次年小寒，不用自己遍历 12 个月。
 
 ### 更多可运行的例子
@@ -143,7 +146,7 @@ termAt(2026)['11-7'].name;   // '立冬'
 | `termJDE(year, n)` | 同上但返回力学时儒略日（不含 ΔT 与时区） |
 | `solar2lunar(y, m, d)` | 公历转农历，返回 `{y,m,d,leap}`；**越界返回 `null`** |
 | `lunarText(l)` | `'九月廿九'` / `'闰六月初一'`；**传 `null` 返回 `''`**（可直接接 `solar2lunar` 的结果） |
-| `lunarFest(y, m, d, l)` | 农历节日名，无则空串（含除夕，跨年处理好了） |
+| `lunarFest(y, m, d, l)` | 农历节日名，无则空串（含除夕，跨年处理好了）；**传 `null` 返回 `''`** |
 | `ganzhi(y)` / `shengxiao(y)` | `'丙午'` / `'马'` |
 | `sanfuState(y, m, d)` | `'今日入伏'` / `'中伏第 1 天'` / 不在三伏内返回 `''` |
 | `jiuday(y, m, d)` | `'一九第 1 天'` / 不在数九内返回 `''` |
@@ -155,7 +158,9 @@ termAt(2026)['11-7'].name;   // '立冬'
 
 ## 已知边界（重要）
 
-**1. 农历只覆盖 1900–2100。** 越界时 `solar2lunar()` 返回 `null`，不会给出错误值。
+**1. 农历只覆盖 1900-01-31 – 2100-12-31。** 越界时 `solar2lunar()` 返回 `null`，不会给出错误值。
+注意下界是 **1 月 31 日**而不是 1 月 1 日——农历数据表以 1900 年正月初一（公历 1900-01-31）为基准日，
+再往前没有数据，所以 1900-01-01 到 01-30 同样返回 `null`。
 节气不受影响——它走天文算法，可以一直算下去。
 
 **2. 2050 年后的「秒」只是预测值。**

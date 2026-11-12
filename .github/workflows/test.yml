@@ -32,3 +32,12 @@ jobs:
       - name: types match runtime exports
         if: matrix.node >= 14
         run: node verify-types.mjs
+
+      # 三个示例是 README 里让人「跑一遍就信」的东西，腐坏了却没人会注意到
+      - name: examples still run
+        if: matrix.node >= 14
+        run: |
+          node examples/next-term.js > /dev/null
+          node examples/term-calendar.js > /dev/null
+          node examples/esm-import.mjs > /dev/null
+          echo "examples ok"

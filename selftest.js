@@ -278,9 +278,40 @@ else bad('2101 未返回 null');
 if (L.solar2lunar(2126, 11, 7) === null) ok('2126 返回 null（节气仍可算，农历不可）');
 else bad('2126 未返回 null');
 
-// 返回 null 之后，调用方最常见的写法是把结果直接喂给 lunarText——不能崩
+// 「年份在范围内、日期却在表首日之前」这一段最容易被漏掉：
+// 1900-01-01 ~ 01-30 早于表首日 1900-01-31，硬算会得到 { y:1899, m:0, d:-29 } 这种非法值，
+// 再喂给 lunarText 就是「undefined月undefined」。必须同样返回 null。
+if (L.solar2lunar(1900, 1, 1) === null) ok('1900-01-01 返回 null（早于表首日，不返回 m=0/d<1 的非法值）');
+else bad('1900-01-01 应为 null，实得 ' + JSON.stringify(L.solar2lunar(1900, 1, 1)));
+if (L.solar2lunar(1900, 1, 30) === null) ok('1900-01-30 返回 null（表首日前一天）');
+else bad('1900-01-30 应为 null，实得 ' + JSON.stringify(L.solar2lunar(1900, 1, 30)));
+const firstDay = L.solar2lunar(1900, 1, 31);
+if (firstDay && firstDay.y === 1900 && firstDay.m === 1 && firstDay.d === 1) ok('1900-01-31 仍正常返回正月初一（表首日不受影响）');
+else bad('1900-01-31 应返回 1900 年正月初一，实得 ' + JSON.stringify(firstDay));
+
+// 全表逐日扫描：任何一天要么给出合法农历，要么给 null，不许出现 m/d 越界
+{
+  let illegal = 0, scanned = 0;
+  for (let yy = 1900; yy <= 2100; yy++) {
+    for (let mm = 1; mm <= 12; mm++) {
+      for (let dd = 1; dd <= 31; dd++) {
+        const probe = new Date(Date.UTC(yy, mm - 1, dd));
+        if (probe.getUTCMonth() !== mm - 1) continue;   // 跳过 2 月 30 日这类不存在的日期
+        scanned++;
+        const r = L.solar2lunar(yy, mm, dd);
+        if (r && (r.m < 1 || r.m > 12 || r.d < 1 || r.d > 30)) illegal++;
+      }
+    }
+  }
+  if (illegal === 0) ok('1900–2100 逐日扫描 ' + scanned + ' 天：无一天返回非法月日');
+  else bad('逐日扫描发现 ' + illegal + ' 天返回非法月日');
+}
+
+// 返回 null 之后，调用方最常见的写法是把结果直接喂给 lunarText / lunarFest——都不能崩
 if (L.lunarText(null) === '') ok('lunarText(null) 返回空串（不抛 TypeError）');
 else bad('lunarText(null) 应返回空串，实得 ' + JSON.stringify(L.lunarText(null)));
+if (L.lunarFest(2026, 11, 7, null) === '') ok('lunarFest(…, null) 返回空串（不抛 TypeError）');
+else bad('lunarFest(…, null) 应返回空串，实得 ' + JSON.stringify(L.lunarFest(2026, 11, 7, null)));
 
 // 节气不受农历表边界影响，2126 年必须照常算出
 if (at2126['11-7'] && at2126['11-7'].name === '立冬') ok('2126 立冬照常算出（节气走天文算法，不受农历表限制）');
